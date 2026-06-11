@@ -11,6 +11,9 @@ class TaskRepository(
     private val taskDao: TaskDao,
     private val advertiserDao: AdvertiserDao
 ) {
+    suspend fun getListsCount(): Int = taskDao.getListsCount()
+    suspend fun getAdvertisersCount(): Int = advertiserDao.getAdvertisersCount()
+
     // --- Task Lists ---
     val allLists: Flow<List<TaskList>> = taskDao.getAllLists()
 

@@ -11,6 +11,9 @@ interface TaskDao {
     @Query("SELECT * FROM task_lists ORDER BY id ASC")
     fun getAllLists(): Flow<List<TaskList>>
 
+    @Query("SELECT COUNT(*) FROM task_lists")
+    suspend fun getListsCount(): Int
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertList(list: TaskList): Long
 

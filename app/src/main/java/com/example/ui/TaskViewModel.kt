@@ -97,9 +97,8 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
     // --- Seeds default data if database tables are empty ---
     private fun seedDataIfNecessary() {
         viewModelScope.launch {
-            // Check if lists are empty
-            taskLists.first { it.isNotEmpty() || taskLists.value.isEmpty() }
-            if (taskLists.value.isEmpty()) {
+            // Check if lists are empty via a direct suspend query to the DB count
+            if (repository.getListsCount() == 0) {
                 val listId1 = repository.insertList(TaskList(name = "Trabalho 💼", colorHex = "#3F51B5", iconName = "work")).toInt()
                 val listId2 = repository.insertList(TaskList(name = "Pessoal 🏠", colorHex = "#4CAF50", iconName = "home")).toInt()
                 val listId3 = repository.insertList(TaskList(name = "Estudos 📚", colorHex = "#FF9800", iconName = "book")).toInt()
@@ -118,9 +117,8 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
                 repository.insertTask(TaskItem(listId = listId4, title = "Comprar presente de aniversário", description = "Comprar livro ou perfume para o pai", priority = "MEDIUM"))
             }
 
-            // Check if advertisers are empty
-            advertisers.first { it.isNotEmpty() || advertisers.value.isEmpty() }
-            if (advertisers.value.isEmpty()) {
+            // Check if advertisers are empty via a direct suspend query to the DB count
+            if (repository.getAdvertisersCount() == 0) {
                 repository.insertAdvertiser(
                     Advertiser(
                         name = "Cafeteria Santo Grão ☕",

@@ -9,6 +9,9 @@ interface AdvertiserDao {
     @Query("SELECT * FROM advertisers ORDER BY id ASC")
     fun getAllAdvertisers(): Flow<List<Advertiser>>
 
+    @Query("SELECT COUNT(*) FROM advertisers")
+    suspend fun getAdvertisersCount(): Int
+
     @Query("SELECT * FROM advertisers WHERE isActive = 1 ORDER BY id DESC")
     fun getActiveAdvertisers(): Flow<List<Advertiser>>
 
