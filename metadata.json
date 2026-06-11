@@ -1,0 +1,6 @@
+{
+  "name": "Gerenciador de Tarefas",
+  "description": "Um sistema moderno de gerenciamento de tarefas com marcação de listas e anunciantes interativos no rodapé.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
