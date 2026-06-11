@@ -8,6 +8,8 @@ import com.example.data.model.Advertiser
 import com.example.data.model.TaskItem
 import com.example.data.model.TaskList
 import com.example.data.repository.TaskRepository
+import android.content.Context
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
@@ -55,8 +57,15 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
         activeAdvertisers = repository.activeAdvertisers
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-        // Seed data on launch if lists and advertisers are empty
-        seedDataIfNecessary()
+        // Clear database once globally to start off freshly zeroed out (empty), as requested
+        val prefs = application.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+        val isFirstClear = prefs.getBoolean("database_cleared_once_v4", false)
+        if (!isFirstClear) {
+            viewModelScope.launch(Dispatchers.IO) {
+                db.clearAllTables()
+                prefs.edit().putBoolean("database_cleared_once_v4", true).apply()
+            }
+        }
 
         // Auto-increment advertiser rotation index for footer every 8 seconds if there are multiple active ads
         startAdvertiserRotation()
@@ -94,78 +103,7 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
-    // --- Seeds default data if database tables are empty ---
-    private fun seedDataIfNecessary() {
-        viewModelScope.launch {
-            // Check if lists are empty via a direct suspend query to the DB count
-            if (repository.getListsCount() == 0) {
-                val listId1 = repository.insertList(TaskList(name = "Trabalho 💼", colorHex = "#3F51B5", iconName = "work")).toInt()
-                val listId2 = repository.insertList(TaskList(name = "Pessoal 🏠", colorHex = "#4CAF50", iconName = "home")).toInt()
-                val listId3 = repository.insertList(TaskList(name = "Estudos 📚", colorHex = "#FF9800", iconName = "book")).toInt()
-                val listId4 = repository.insertList(TaskList(name = "Compras 🛒", colorHex = "#9C27B0", iconName = "shopping")).toInt()
 
-                // Insert some default tasks
-                repository.insertTask(TaskItem(listId = listId1, title = "Revisar relatório de vendas", description = "Analisar dados do Q2 e repassar para gerência", priority = "HIGH"))
-                repository.insertTask(TaskItem(listId = listId1, title = "Agendar reunião de equipe", description = "Google Meet às 14h sobre novas metas", priority = "MEDIUM"))
-                
-                repository.insertTask(TaskItem(listId = listId2, title = "Comprar mantimentos", description = "Leite, ovos, pão de queijo e frutas", priority = "LOW"))
-                repository.insertTask(TaskItem(listId = listId2, title = "Exercício de 40 min", description = "Treino aeróbico ou corrida no parque", priority = "MEDIUM", isCompleted = true))
-
-                repository.insertTask(TaskItem(listId = listId3, title = "Módulo 2 de Kotlin", description = "Entender StateFlow e corrotinas do Jetpack Compose", priority = "HIGH"))
-                repository.insertTask(TaskItem(listId = listId3, title = "Ler 10 páginas de livro", description = "Leitura diária focado em desenvolvimento de carreira", priority = "LOW"))
-
-                repository.insertTask(TaskItem(listId = listId4, title = "Comprar presente de aniversário", description = "Comprar livro ou perfume para o pai", priority = "MEDIUM"))
-            }
-
-            // Check if advertisers are empty via a direct suspend query to the DB count
-            if (repository.getAdvertisersCount() == 0) {
-                repository.insertAdvertiser(
-                    Advertiser(
-                        name = "Cafeteria Santo Grão ☕",
-                        slogan = "Melhores grãos e espressos artesanais!",
-                        bannerText = "Ganhe 15% de desconto apresentando este anúncio com o cupom CAFE15. Visite nossa cafeteria no centro!",
-                        targetUrl = "https://santograo.com.br/promo",
-                        colorHex = "#8D6E63", // Brown
-                        iconName = "coffee",
-                        clickCount = 14
-                    )
-                )
-                repository.insertAdvertiser(
-                    Advertiser(
-                        name = "Academia MoveFit 💪",
-                        slogan = "Matrícula grátis + Brinde exclusivo!",
-                        bannerText = "Seu projeto de vida saudável começa agora. Use o cupom MOVEFIT para treinar de graça a primeira semana inteira!",
-                        targetUrl = "https://movefitacademy.com/aistudio",
-                        colorHex = "#2E7D32", // Green
-                        iconName = "fitness",
-                        clickCount = 8
-                    )
-                )
-                repository.insertAdvertiser(
-                    Advertiser(
-                        name = "Delivery Pizza Premium 🍕",
-                        slogan = "Peça uma pizza grande e ganhe uma broto doce",
-                        bannerText = "Tradicional massa napolitana assada no forno a lenha. Digite PIZZALOVER no checkout para garantir o brinde especial!",
-                        targetUrl = "https://premium.pizzaria.br/cupom",
-                        colorHex = "#E64A19", // Deep Orange
-                        iconName = "fastfood",
-                        clickCount = 23
-                    )
-                )
-                repository.insertAdvertiser(
-                    Advertiser(
-                        name = "DevCourses Tech 💻",
-                        slogan = "Aprenda Android & Kotlin com especialistas",
-                        bannerText = "Acelere sua carreira tech hoje de forma descomplicada. Matricule-se com cupom DEVKT20 para 20% off em toda a plataforma!",
-                        targetUrl = "https://devcourses.com/pro-kotlin",
-                        colorHex = "#0288D1", // Blue color
-                        iconName = "computer",
-                        clickCount = 37
-                    )
-                )
-            }
-        }
-    }
 
     private fun startAdvertiserRotation() {
         viewModelScope.launch {
